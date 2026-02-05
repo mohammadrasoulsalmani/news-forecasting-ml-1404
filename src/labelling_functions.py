@@ -30,7 +30,6 @@ class PS_LF(object):
     def label(self,df):
         """
         """
-        
         if df.shape[0]>0:
             
             if df.shape[0]>self.min_count:
