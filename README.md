@@ -1,110 +1,151 @@
 # 🗞️ Political News Engagement Forecasting on Twitter
-Forecasting user engagement with political news on Twitter using deep learning and time-series modeling.
-
----
 
 ## 📌 Project Overview
-This project implements a **deep-learning pipeline for forecasting political news engagement patterns on Twitter**, leveraging longitudinal user interaction data across the political spectrum.  
+Deep learning pipeline for forecasting user engagement with political news on Twitter across **7 ideological stances** (-3 far-left to +3 far-right).
 
-The goal is to **predict future user engagement per ideological stance** while uncovering behavioral segments through clustering.  
-
-Developed as part of the **Artificial Intelligence course final project**, focusing on reproducibility, evaluation, and interpretability.
-
----
-
-## 🎯 Problem Definition
-Given historical Twitter engagement data categorized by **7 political stances** (-3 = far-left, 0 = center, +3 = far-right), the task is to:
-
-- Model longitudinal engagement patterns of users
-- Forecast quarterly engagement counts across ideological bins
-- Segment users based on their news consumption behaviors
-
-**Task Types:**  
-- Time-series forecasting  
-- User behavior modeling  
-- Unsupervised clustering  
-
-**Evaluation Metric:**  
-- Mean Absolute Error (MAE)
+- **Task:** Time-series forecasting + User clustering  
+- **Evaluation Metric:** Mean Absolute Error (MAE)
 
 ---
 
 ## 📊 Dataset
-- **Source:** ICWSM 2024 anonymized Twitter dataset  
-- **Size:** ~50,000 sampled users  
-- **Time Span:** 2008–2021 (focus 2015–2021)  
-- **Political Stances:**  
-  - -3 (far-left)  
-  - -2  
-  - -1  
-  - 0 (center)  
-  - +1  
-  - +2  
-  - +3 (far-right)  
 
-Each user’s engagement history is aggregated into **quarterly time-series sequences**.
+| Item | Value |
+|------|--------|
+| Source | ICWSM 2024 (anonymized) |
+| Sample | 10% (563,778 records) |
+| Users | 5,975 unique |
+| Time Span | 2009–2021 |
+| Sequences | 39,044 (8 quarters → 1 quarter) |
+| Input Shape | (batch, 8, 7) |
+| Target Shape | (batch, 7) |
+
+**Political Stances:** -3, -2, -1, 0, +1, +2, +3
 
 ---
 
 ## 🧠 Methodology
 
 ### 1️⃣ Data Processing
-- Load and sample user engagement histories
-- Aggregate engagements into quarterly bins
-- Convert sequences into neural network inputs:
-  - **Input:** last 8 quarters  
-  - **Target:** next quarter engagement
-- Normalize and structure data for deep learning models
-
-### 2️⃣ Modeling
-- Logistic Regression + TF-IDF baseline
-- **Final Model:** Bidirectional LSTM (transformer variant available)  
-- Trained in **PyTorch** to predict engagement intensity across 7 ideological stances
-
-### 3️⃣ User Clustering
-- Extract user embeddings from trained model
-- Apply **K-Means clustering**
-- Identify **20 behavioral clusters**
-- Each cluster represents a distinct political news consumption pattern
-
-### 4️⃣ Visualization
-- Heatmaps and training curves
-- Display engagement across political spectrum over time
-- Support interpretability and cluster analysis
+- Random sampling (10%)
+- Quarterly aggregation
+- 80/20 train-validation split
 
 ---
 
-## 🧪 Results
+### 2️⃣ Models
 
-| Component | Result |
-|-----------|--------|
-| Best Model | BiLSTM |
-| Validation MAE | ~3.73 (baseline: 3.89) |
-| Number of Clusters | 20 |
-| Political Spectrum | -3 to +3 |
+| Model | Performance |
+|--------|-------------|
+| Baseline (Last Value) | MAE: 3.89 |
+| Logistic Regression + TF-IDF | Accuracy: 68% |
+| Bidirectional LSTM | **MAE: 3.73 (+4.1%)** |
 
-### Generated Outputs
-- **Trained Model:**  
-  `models_saved/full_model.pth`
-- **Cluster Analysis:**  
-  `results/cluster_analysis.csv`
-- **Visualizations:**  
-  `results/figures/` (heatmaps & training curves)
+#### LSTM Architecture
+- 2 layers
+- 128 hidden units
+- Bidirectional
+- Dropout: 0.3
+- Optimizer: Adam (lr=1e-3)
+- Early stopping (patience=5)
+
+---
+
+### 3️⃣ User Clustering
+- Extracted **256-dim embeddings** from LSTM hidden state
+- K-Means clustering (K=10)
+- 7,809 validation sequences embedded
+
+#### Top Clusters
+
+| Cluster | Users | Avg Stance |
+|----------|--------|-------------|
+| 2 | 2,106 (27%) | -0.45 |
+| 4 | 1,547 (20%) | -0.12 |
+| 8 | 1,452 (19%) | -0.93 |
 
 ---
 
 ## 📁 Project Structure
-```text
-├── config/               # Configuration and hyperparameters
-├── data/                 # Raw & preprocessed data (not tracked by Git)
-├── models/               # LSTM & Transformer model definitions
-├── training/             # Training loops and trainer scripts
-├── evaluation/           # Metrics computation and cluster analysis
-├── visualization/        # Plotting utilities & figures
-├── notebooks/            # EDA and experiments
-├── scripts/              # CLI pipelines (train, evaluate, cluster)
-├── models_saved/         # Saved PyTorch model weights (ignored in Git)
-├── results/              # Metrics, CSVs, figures
-├── requirements.txt
-├── README.md
-└── .gitignore
+
+├── config/ # Hyperparameters
+├── dataLoader/ # JSON loading + sequence builder
+├── models/ # Bidirectional LSTM
+├── training/ # Trainer + early stopping
+├── evaluation/ # Clustering + metrics
+├── visualization/ # Plots (curves, heatmaps)
+├── notebooks/ # EDA, baseline, experiments
+├── scripts/ # train_pipeline.py
+├── models_saved/ # full_model.pth (2.1 MB)
+└── results/ # cluster_results.pkl + figures
+
+
+---
+
+## 🚀 Quick Start
+
+### Install dependencies
+```bash
+pip install -r requirements.txt
+Run full pipeline
+cd scripts
+python train_pipeline.py
+Output
+✅ Model → models_saved/full_model.pth
+
+✅ Results → results/cluster_results.pkl
+
+✅ Figures → results/figures/
+
+⚙️ Configuration
+# config/settings.py
+
+SAMPLE_FRACTION = 0.10
+SEQ_LENGTH = 8
+NUM_STANCES = 7
+HIDDEN_DIM = 128
+NUM_LAYERS = 2
+DROPOUT = 0.3
+BIDIRECTIONAL = True
+BATCH_SIZE = 32
+NUM_EPOCHS = 50
+PATIENCE = 5
+NUM_CLUSTERS = 10
+📈 Results Summary
+Component	Result
+Best Model	BiLSTM
+Validation MAE	3.73
+Baseline MAE	3.89
+Improvement	+4.1%
+Users Clustered	5,975
+Clusters Found	10
+Model Size	2.1 MB
+✅ Requirements Checklist
+Requirement	Status
+EDA with 6+ plots	✅
+Baseline Model	✅
+Deep Learning Model	✅
+Model Improvement	✅
+Evaluation Metrics	✅
+User Clustering	✅
+Modular Code	✅
+GitHub Ready	✅
+📦 Dependencies
+torch>=1.10.0
+numpy>=1.21.0
+pandas>=1.3.0
+scikit-learn>=1.0.0
+matplotlib>=3.4.0
+seaborn>=0.11.0
+tqdm>=4.62.0
+jupyter
+wordcloud
+📚 References
+
+Shivaram et al. (2024). Forecasting Political News Engagement on Social Media. ICWSM.
+
+
+📊 Version: 1.0.0
+🎓 Course: AI
+👨‍🏫 Instructor: Dr. Pishgoo
+🧑‍💻 TA: Eng. Ghorbani
