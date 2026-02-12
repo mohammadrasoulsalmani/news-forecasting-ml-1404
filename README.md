@@ -79,7 +79,7 @@ Deep learning pipeline for forecasting user engagement with political news on Tw
 ├── scripts/              # train_pipeline.py
 ├── models_saved/         # full_model.pth (2.1 MB)
 └── results/              # cluster_results.pkl + figures
-
+```
 
 ## 🚀 Quick Start
 
@@ -87,10 +87,12 @@ Deep learning pipeline for forecasting user engagement with political news on Tw
 
 ```bash
 pip install -r requirements.txt
+```
 
 ```bash
 cd scripts
 python train_pipeline.py
+```
 
 
 
